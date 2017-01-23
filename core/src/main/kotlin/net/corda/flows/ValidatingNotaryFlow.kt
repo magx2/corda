@@ -29,8 +29,8 @@ class ValidatingNotaryFlow(otherSide: Party,
             wtx.toLedgerTransaction(serviceHub).verify()
         } catch (e: Exception) {
             when (e) {
-                is TransactionVerificationException,
-                is SignatureException -> throw NotaryException(NotaryError.TransactionInvalid())
+                is TransactionVerificationException -> NotaryException(NotaryError.TransactionInvalid(e.toString()))
+                is SignatureException -> throw NotaryException(NotaryError.SignaturesInvalid(e.toString()))
                 else -> throw e
             }
         }

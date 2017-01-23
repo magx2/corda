@@ -182,7 +182,8 @@ sealed class NotaryError {
     /** Thrown if the time specified in the timestamp command is outside the allowed tolerance */
     class TimestampInvalid : NotaryError()
 
-    class TransactionInvalid : NotaryError()
+    class TransactionInvalid(val msg: String) : NotaryError()
+    class SignaturesInvalid(val msg: String): NotaryError()
 
     class SignaturesMissing(val missingSigners: Set<CompositeKey>, val descriptions: List<String>) : NotaryError() {
         constructor(ex: SignedTransaction.SignaturesMissingException) : this(ex.missing, ex.descriptions)
