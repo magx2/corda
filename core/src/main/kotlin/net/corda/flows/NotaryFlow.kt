@@ -48,7 +48,7 @@ object NotaryFlow {
             try {
                 stx.verifySignatures(notaryParty.owningKey)
             } catch (ex: SignedTransaction.SignaturesMissingException) {
-                throw NotaryException(NotaryError.SignaturesMissing(ex.missing))
+                throw NotaryException(NotaryError.SignaturesMissing(ex))
             }
 
             val response = sendAndReceive<Result>(notaryParty, SignRequest(stx))
@@ -184,7 +184,8 @@ sealed class NotaryError {
 
     class TransactionInvalid : NotaryError()
 
-    class SignaturesMissing(val missingSigners: Set<CompositeKey>) : NotaryError() {
-        override fun toString() = "Missing signatures from: ${missingSigners.map { it.toBase58String() }}"
+    class SignaturesMissing(val missingSigners: Set<CompositeKey>, val descriptions: List<String>) : NotaryError() {
+        constructor(ex: SignedTransaction.SignaturesMissingException) : this(ex.missing, ex.descriptions)
+        override fun toString() = "Missing signatures from ${descriptions}: ${missingSigners.map { it.toBase58String() }}"
     }
 }

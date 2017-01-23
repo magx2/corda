@@ -40,7 +40,7 @@ class ValidatingNotaryFlow(otherSide: Party,
         try {
             stx.verifySignatures(serviceHub.myInfo.notaryIdentity.owningKey)
         } catch(e: SignedTransaction.SignaturesMissingException) {
-            throw NotaryException(NotaryError.SignaturesMissing(e.missing))
+            throw NotaryException(NotaryError.SignaturesMissing(e))
         }
     }
 
