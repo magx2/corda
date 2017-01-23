@@ -52,7 +52,7 @@ class ValidatingNotaryServiceTests {
         val future = runClient(stx)
 
         val ex = assertFailsWith(NotaryException::class) { future.getOrThrow() }
-        assertThat(ex.error).isInstanceOf(NotaryError.TransactionInvalid::class.java)
+        assertThat(ex.error).isInstanceOf(NotaryError.SignaturesInvalid::class.java)
     }
 
     @Test fun `should report error for missing signatures`() {
