@@ -84,9 +84,9 @@ class TwoPartyTradeFlowTests {
         net = MockNetwork(false, true)
 
         ledger {
-            notaryNode = net.createNotaryNode(null, DUMMY_NOTARY.name, DUMMY_NOTARY_KEY)
-            aliceNode = net.createPartyNode(notaryNode.info.address, ALICE.name, ALICE_KEY)
-            bobNode = net.createPartyNode(notaryNode.info.address, BOB.name, BOB_KEY)
+            notaryNode = net.createNotaryNode(null, DUMMY_NOTARY.name)
+            aliceNode = net.createPartyNode(notaryNode.info.address, ALICE.name)
+            bobNode = net.createPartyNode(notaryNode.info.address, BOB.name)
             val aliceKey = aliceNode.services.legalIdentityKey
             val notaryKey = notaryNode.services.notaryIdentityKey
 
@@ -124,9 +124,9 @@ class TwoPartyTradeFlowTests {
     @Test
     fun `shutdown and restore`() {
         ledger {
-            notaryNode = net.createNotaryNode(null, DUMMY_NOTARY.name, DUMMY_NOTARY_KEY)
-            aliceNode = net.createPartyNode(notaryNode.info.address, ALICE.name, ALICE_KEY)
-            bobNode = net.createPartyNode(notaryNode.info.address, BOB.name, BOB_KEY)
+            notaryNode = net.createNotaryNode(null, DUMMY_NOTARY.name)
+            aliceNode = net.createPartyNode(notaryNode.info.address, ALICE.name)
+            bobNode = net.createPartyNode(notaryNode.info.address, BOB.name)
             aliceNode.disableDBCloseOnStop()
             bobNode.disableDBCloseOnStop()
             val aliceKey = aliceNode.services.legalIdentityKey
@@ -179,10 +179,10 @@ class TwoPartyTradeFlowTests {
             // that Bob was waiting on before the reboot occurred.
             bobNode = net.createNode(networkMapAddr, bobAddr.id, object : MockNetwork.Factory {
                 override fun create(config: NodeConfiguration, network: MockNetwork, networkMapAddr: SingleMessageRecipient?,
-                                    advertisedServices: Set<ServiceInfo>, id: Int, keyPair: KeyPair?): MockNetwork.MockNode {
-                    return MockNetwork.MockNode(config, network, networkMapAddr, advertisedServices, bobAddr.id, BOB_KEY)
+                                    advertisedServices: Set<ServiceInfo>, id: Int, overrideServices: Map<ServiceInfo, KeyPair>?): MockNetwork.MockNode {
+                    return MockNetwork.MockNode(config, network, networkMapAddr, advertisedServices, bobAddr.id, overrideServices)
                 }
-            }, true, BOB.name, BOB_KEY)
+            }, true, BOB.name)
 
             // Find the future representing the result of this state machine again.
             val bobFuture = bobNode.smm.findStateMachines(Buyer::class.java).single().second
@@ -213,12 +213,12 @@ class TwoPartyTradeFlowTests {
 
     // Creates a mock node with an overridden storage service that uses a RecordingMap, that lets us test the order
     // of gets and puts.
-    private fun makeNodeWithTracking(networkMapAddr: SingleMessageRecipient?, name: String, keyPair: KeyPair): MockNetwork.MockNode {
+    private fun makeNodeWithTracking(networkMapAddr: SingleMessageRecipient?, name: String, overrideServices: Map<ServiceInfo, KeyPair>? = null): MockNetwork.MockNode {
         // Create a node in the mock network ...
         return net.createNode(networkMapAddr, -1, object : MockNetwork.Factory {
             override fun create(config: NodeConfiguration, network: MockNetwork, networkMapAddr: SingleMessageRecipient?,
-                                advertisedServices: Set<ServiceInfo>, id: Int, keyPair: KeyPair?): MockNetwork.MockNode {
-                return object : MockNetwork.MockNode(config, network, networkMapAddr, advertisedServices, id, keyPair) {
+                                advertisedServices: Set<ServiceInfo>, id: Int, overrideServices: Map<ServiceInfo, KeyPair>?): MockNetwork.MockNode {
+                return object : MockNetwork.MockNode(config, network, networkMapAddr, advertisedServices, id, overrideServices) {
                     // That constructs the storage service object in a customised way ...
                     override fun constructStorageService(
                             attachments: NodeAttachmentService,
@@ -229,14 +229,14 @@ class TwoPartyTradeFlowTests {
                     }
                 }
             }
-        }, true, name, keyPair)
+        }, true, name, overrideServices)
     }
 
     @Test
     fun `check dependencies of sale asset are resolved`() {
-        notaryNode = net.createNotaryNode(null, DUMMY_NOTARY.name, DUMMY_NOTARY_KEY)
-        aliceNode = makeNodeWithTracking(notaryNode.info.address, ALICE.name, ALICE_KEY)
-        bobNode = makeNodeWithTracking(notaryNode.info.address, BOB.name, BOB_KEY)
+        notaryNode = net.createNotaryNode(null, DUMMY_NOTARY.name)
+        aliceNode = makeNodeWithTracking(notaryNode.info.address, ALICE.name)
+        bobNode = makeNodeWithTracking(notaryNode.info.address, BOB.name)
         val aliceKey = aliceNode.services.legalIdentityKey
 
         ledger(aliceNode.services) {
@@ -326,9 +326,9 @@ class TwoPartyTradeFlowTests {
     @Test
     fun `track() works`() {
 
-        notaryNode = net.createNotaryNode(null, DUMMY_NOTARY.name, DUMMY_NOTARY_KEY)
-        aliceNode = makeNodeWithTracking(notaryNode.info.address, ALICE.name, ALICE_KEY)
-        bobNode = makeNodeWithTracking(notaryNode.info.address, BOB.name, BOB_KEY)
+        notaryNode = net.createNotaryNode(null, DUMMY_NOTARY.name)
+        aliceNode = makeNodeWithTracking(notaryNode.info.address, ALICE.name)
+        bobNode = makeNodeWithTracking(notaryNode.info.address, BOB.name)
         val aliceKey = aliceNode.services.legalIdentityKey
 
         ledger(aliceNode.services) {
@@ -426,9 +426,9 @@ class TwoPartyTradeFlowTests {
             aliceError: Boolean,
             expectedMessageSubstring: String
     ) {
-        notaryNode = net.createNotaryNode(null, DUMMY_NOTARY.name, DUMMY_NOTARY_KEY)
-        aliceNode = net.createPartyNode(notaryNode.info.address, ALICE.name, ALICE_KEY)
-        bobNode = net.createPartyNode(notaryNode.info.address, BOB.name, BOB_KEY)
+        notaryNode = net.createNotaryNode(null, DUMMY_NOTARY.name)
+        aliceNode = net.createPartyNode(notaryNode.info.address, ALICE.name)
+        bobNode = net.createPartyNode(notaryNode.info.address, BOB.name)
         val aliceKey = aliceNode.services.legalIdentityKey
         val bobKey = bobNode.services.legalIdentityKey
         val issuer = MEGA_CORP.ref(1, 2, 3)
