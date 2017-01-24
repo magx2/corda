@@ -12,6 +12,8 @@ import net.corda.core.flows.FlowException
 import net.corda.core.flows.FlowLogic
 import net.corda.core.getOrThrow
 import net.corda.core.map
+import net.corda.core.messaging.MessageRecipients
+import net.corda.core.node.services.PartyInfo
 import net.corda.core.random63BitValue
 import net.corda.core.rootCause
 import net.corda.core.serialization.OpaqueBytes
@@ -20,6 +22,7 @@ import net.corda.flows.CashCommand
 import net.corda.flows.CashFlow
 import net.corda.flows.NotaryFlow
 import net.corda.node.services.persistence.checkpoints
+import net.corda.node.services.transactions.ValidatingNotaryService
 import net.corda.node.utilities.databaseTransaction
 import net.corda.testing.expect
 import net.corda.testing.expectEvents
@@ -319,33 +322,38 @@ class StateMachineManagerTests {
                     node2.info.legalIdentity)))
             net.runNetwork()
         }
+        val endpoint = net.messagingNetwork.endpoint(notary1.net.myAddress as InMemoryMessagingNetwork.PeerHandle)!!
+        val notary1Address: MessageRecipients = endpoint.getAddressOfParty(notary1.services.networkMapCache.getPartyInfo(notary1.info.notaryIdentity)!!)
+        val notary2Address: MessageRecipients = endpoint.getAddressOfParty(notary2.services.networkMapCache.getPartyInfo(notary2.info.notaryIdentity)!!)
+        assert(notary1Address is InMemoryMessagingNetwork.ServiceHandle)
+        assert(notary2Address is InMemoryMessagingNetwork.ServiceHandle)
         sessionTransfers.expectEvents(isStrict = false) {
             sequence(
                     // First Pay
                     expect(match = { it.message is SessionInit && it.message.flowName == NotaryFlow.Client::class.java.name }) {
                         it.message as SessionInit
-                        require(it.from == node1.id)
-                        require(it.to == TransferRecipient.Service(notary1.info.notaryIdentity))
+                        assertEquals(node1.id, it.from)
+                        assertEquals(notary1Address, it.to)
                     },
                     expect(match = { it.message is SessionConfirm }) {
                         it.message as SessionConfirm
-                        require(it.from == notary1.id)
+                        assertEquals(notary1.id, it.from)
                     },
                     // Second pay
                     expect(match = { it.message is SessionInit && it.message.flowName == NotaryFlow.Client::class.java.name }) {
                         it.message as SessionInit
-                        require(it.from == node1.id)
-                        require(it.to == TransferRecipient.Service(notary1.info.notaryIdentity))
+                        assertEquals(node1.id, it.from)
+                        assertEquals(notary1Address, it.to)
                     },
                     expect(match = { it.message is SessionConfirm }) {
                         it.message as SessionConfirm
-                        require(it.from == notary2.id)
+                        assertEquals(notary2.id, it.from)
                     },
                     // Third pay
                     expect(match = { it.message is SessionInit && it.message.flowName == NotaryFlow.Client::class.java.name }) {
                         it.message as SessionInit
-                        require(it.from == node1.id)
-                        require(it.to == TransferRecipient.Service(notary1.info.notaryIdentity))
+                        assertEquals(node1.id, it.from)
+                        assertEquals(notary1Address, it.to)
                     },
                     expect(match = { it.message is SessionConfirm }) {
                         it.message as SessionConfirm
@@ -398,16 +406,11 @@ class StateMachineManagerTests {
     }
 
     private fun assertSessionTransfers(node: MockNode, vararg expected: SessionTransfer) {
-        val actualForNode = sessionTransfers.filter { it.from == node.id || it.to == TransferRecipient.Peer(node.id) }
+        val actualForNode = sessionTransfers.filter { it.from == node.id || it.to == node.net.myAddress }
         assertThat(actualForNode).containsExactly(*expected)
     }
 
-    private interface TransferRecipient {
-        data class Peer(val id: Int) : TransferRecipient
-        data class Service(val identity: Party) : TransferRecipient
-    }
-
-    private data class SessionTransfer(val from: Int, val message: SessionMessage, val to: TransferRecipient) {
+    private data class SessionTransfer(val from: Int, val message: SessionMessage, val to: MessageRecipients) {
         val isPayloadTransfer: Boolean get() = message is SessionData || message is SessionInit && message.firstPayload != null
         override fun toString(): String = "$from sent $message to $to"
     }
@@ -416,13 +419,7 @@ class StateMachineManagerTests {
         return filter { it.message.topicSession == StateMachineManager.sessionTopic }.map {
             val from = it.sender.id
             val message = it.message.data.deserialize<SessionMessage>()
-            val recipients = it.recipients
-            val to = when (recipients) {
-                is InMemoryMessagingNetwork.PeerHandle -> TransferRecipient.Peer(recipients.id)
-                is InMemoryMessagingNetwork.ServiceHandle -> TransferRecipient.Service(recipients.service.identity)
-                else -> throw IllegalStateException("Unknown recipients $recipients")
-            }
-            SessionTransfer(from, sanitise(message), to)
+            SessionTransfer(from, sanitise(message), it.recipients)
         }
     }
 
@@ -437,7 +434,7 @@ class StateMachineManagerTests {
     }
 
     private infix fun MockNode.sent(message: SessionMessage): Pair<Int, SessionMessage> = Pair(id, message)
-    private infix fun Pair<Int, SessionMessage>.to(node: MockNode): SessionTransfer = SessionTransfer(first, second, TransferRecipient.Peer(node.id))
+    private infix fun Pair<Int, SessionMessage>.to(node: MockNode): SessionTransfer = SessionTransfer(first, second, node.net.myAddress)
 
 
     private class NoOpFlow(val nonTerminating: Boolean = false) : FlowLogic<Unit>() {
