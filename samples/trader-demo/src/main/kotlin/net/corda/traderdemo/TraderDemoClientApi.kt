@@ -39,6 +39,10 @@ class TraderDemoClientApi(val rpc: CordaRPCOps) {
         val logger = loggerFor<TraderDemoClientApi>()
     }
 
+    fun runBuyer(amount: Amount<Currency> = 30000.0.DOLLARS, notary: String = "Notary"): Boolean {
+
+    }
+
     fun runBuyer2(amount: Amount<Currency> = 30000.0.DOLLARS, notary: String = "Notary"): Boolean {
         val bankOfCordaParty = rpc.partyFromName(BOC.name)
                 ?: throw Exception("Unable to locate ${BOC.name} in Network Map Service")
