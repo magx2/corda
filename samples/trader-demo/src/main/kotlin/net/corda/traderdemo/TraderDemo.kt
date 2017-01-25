@@ -54,7 +54,7 @@ class TraderDemo {
         if (role == Role.BUYER) {
             val host = HostAndPort.fromString("localhost:10004")
             CordaRPCClient(host, sslConfigFor("BankA", options.valueOf(certsPath))).use("demo", "demo") {
-                BuyersClientApi(this).runBuyer(issuers, options.valueOf(certsPath))
+                BuyersClientApi(this).findAllCommercialPapers(issuers, options.valueOf(certsPath))
             }
         } else {
             issuers.forEach { issuer ->

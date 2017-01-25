@@ -1,6 +1,7 @@
 package net.corda.traderdemo.api
 
 import com.google.common.net.HostAndPort
+import net.corda.core.contracts.ContractState
 import net.corda.core.contracts.DOLLARS
 import net.corda.core.messaging.CordaRPCOps
 import net.corda.core.messaging.startFlow
@@ -10,24 +11,24 @@ import net.corda.core.utilities.loggerFor
 import net.corda.flows.IssuerFlow.IssuanceRequester
 import net.corda.node.services.messaging.CordaRPCClient
 import net.corda.traderdemo.sslConfigFor
+import java.util.*
 
 class BuyersClientApi(val rpc: CordaRPCOps) {
     private companion object {
         val logger = loggerFor<BuyersClientApi>()
     }
-    fun runBuyer(issuers: List<Map<String, Any>>, certsPath: String?): Boolean {
+    fun findAllCommercialPapers(issuers: List<Map<String, Any>>, certsPath: String?): ArrayList<ContractState> {
+        val papers = ArrayList<ContractState>()
         issuers.forEach { issuer ->
             logger.info("Connecting to ${issuer["name"]}.")
             val host = HostAndPort.fromString(issuer["host"] as String)
             CordaRPCClient(host, sslConfigFor(issuer["name"] as String, certsPath)).use("demo", "demo") {
                 val allLoans = SellersClientApi(this).allLoans()
-                allLoans.forEach { loan ->
-                    logger.info("qwerty: $loan")
-                }
+                papers.addAll(allLoans)
             }
         }
 
-        return false
+        return papers
     }
 
     fun runBuyer2(amount: net.corda.core.contracts.Amount<java.util.Currency> = 30000.0.DOLLARS, notary: String = "Notary"): Boolean {
