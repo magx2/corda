@@ -21,7 +21,7 @@ class SellersClientApi(val rpc: CordaRPCOps) {
         val logger = loggerFor<SellersClientApi>()
     }
 
-    fun runSeller(amount: Amount<Currency> = 1000.0.DOLLARS, counterparty: String): Boolean {
+    fun issueLoan(/* tutaj powinien byc loan obj*/): Boolean {
         val commercialPaperTx = rpc.startFlow(::IssueFlow).returnValue.toBlocking().first()
         val commercialPaper = commercialPaperTx.tx.outRef<CommercialPaper.State>(0)
         return false

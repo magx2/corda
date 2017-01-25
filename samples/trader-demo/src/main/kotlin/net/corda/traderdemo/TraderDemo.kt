@@ -55,7 +55,7 @@ private class TraderDemo {
         } else {
             val host = HostAndPort.fromString("localhost:10006")
             CordaRPCClient(host, sslConfigFor("BankB", options.valueOf(certsPath))).use("demo", "demo") {
-                SellersClientApi(this).runSeller(1000.DOLLARS, "Bank A")
+                SellersClientApi(this).issueLoan()
             }
         }
     }
