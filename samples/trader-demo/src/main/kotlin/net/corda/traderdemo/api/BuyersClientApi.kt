@@ -24,9 +24,14 @@ class BuyersClientApi(val rpc: CordaRPCOps) {
             val host = HostAndPort.fromString(issuer["host"] as String)
             CordaRPCClient(host, sslConfigFor(issuer["name"] as String, certsPath)).use("demo", "demo") {
                 val allLoans = SellersClientApi(this).allLoans()
-                papers.addAll(allLoans)
+//                papers.addAll(allLoans)
+                allLoans.forEach {
+                    logger.info("qqq: $it")
+                }
             }
         }
+
+//        CommercialPaperFlow(commercialPaper = papers[0])
 
         return papers
     }

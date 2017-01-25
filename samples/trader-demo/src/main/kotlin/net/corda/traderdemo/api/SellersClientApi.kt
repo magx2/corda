@@ -26,10 +26,10 @@ class SellersClientApi(val rpc: CordaRPCOps) {
         val logger = loggerFor<SellersClientApi>()
     }
 
-    fun allLoans(): List<ContractState> {
+    fun allLoans(): List<StateAndRef<ContractState>> {
         logger.info("all loans")
-        val xxx: List<ContractState> = rpc.vaultAndUpdates().first
-                .map { it.state.data }
+        val xxx: List<StateAndRef<ContractState>> = rpc.vaultAndUpdates().first
+//                .map { it.state.data }
 
 //        xxx.forEach { logger.info("> $it") }
 //
