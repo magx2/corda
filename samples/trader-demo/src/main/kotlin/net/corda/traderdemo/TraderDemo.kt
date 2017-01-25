@@ -7,6 +7,7 @@ import net.corda.core.div
 import net.corda.core.utilities.loggerFor
 import net.corda.node.services.config.SSLConfiguration
 import net.corda.node.services.messaging.CordaRPCClient
+import net.corda.traderdemo.api.BuyersClientApi
 import net.corda.traderdemo.api.SellersClientApi
 import org.slf4j.Logger
 import java.nio.file.Path
@@ -49,7 +50,7 @@ private class TraderDemo {
         if (role == Role.BUYER) {
             val host = HostAndPort.fromString("localhost:10004")
             CordaRPCClient(host, sslConfigFor("BankA", options.valueOf(certsPath))).use("demo", "demo") {
-                TraderDemoClientApi(this).runBuyer()
+                BuyersClientApi(this).runBuyer()
             }
         } else {
             val host = HostAndPort.fromString("localhost:10006")

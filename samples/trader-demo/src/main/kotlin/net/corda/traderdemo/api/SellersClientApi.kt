@@ -7,7 +7,6 @@ import net.corda.core.messaging.CordaRPCOps
 import net.corda.core.messaging.startFlow
 import net.corda.core.utilities.Emoji
 import net.corda.core.utilities.loggerFor
-import net.corda.traderdemo.TraderDemoClientApi
 import net.corda.traderdemo.flow.SellerFlow
 import java.util.*
 import kotlin.test.assertEquals
@@ -19,7 +18,7 @@ import net.corda.traderdemo.flow.*
 
 class SellersClientApi(val rpc: CordaRPCOps) {
     private companion object {
-        val logger = loggerFor<TraderDemoClientApi>()
+        val logger = loggerFor<SellersClientApi>()
     }
 
     fun runSeller(amount: Amount<Currency> = 1000.0.DOLLARS, counterparty: String): Boolean {
