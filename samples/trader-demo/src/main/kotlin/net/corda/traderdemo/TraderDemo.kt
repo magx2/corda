@@ -21,7 +21,7 @@ fun main(args: Array<String>) {
     TraderDemo().main(args)
 }
 
-private class TraderDemo {
+class TraderDemo {
     enum class Role {
         BUYER,
         SELLER
@@ -44,18 +44,25 @@ private class TraderDemo {
             exitProcess(1)
         }
 
+        val issuers = listOf(mapOf<String, Any>(
+                "host" to  "localhost:10006",
+                "name" to "BankB"
+        ))
         // What happens next depends on the role. The buyer sits around waiting for a trade to start. The seller role
         // will contact the buyer and actually make something happen.
         val role = options.valueOf(roleArg)!!
         if (role == Role.BUYER) {
             val host = HostAndPort.fromString("localhost:10004")
             CordaRPCClient(host, sslConfigFor("BankA", options.valueOf(certsPath))).use("demo", "demo") {
-                BuyersClientApi(this).runBuyer()
+                BuyersClientApi(this).runBuyer(issuers, options.valueOf(certsPath))
             }
         } else {
-            val host = HostAndPort.fromString("localhost:10006")
-            CordaRPCClient(host, sslConfigFor("BankB", options.valueOf(certsPath))).use("demo", "demo") {
-                SellersClientApi(this).issueLoan()
+            issuers.forEach { issuer ->
+                logger.info("Creating issuer ${issuer["name"]}.")
+                val host = HostAndPort.fromString(issuer["host"] as String)
+                CordaRPCClient(host, sslConfigFor(issuer["name"] as String, options.valueOf(certsPath))).use("demo", "demo") {
+                    SellersClientApi(this).issueLoan()
+                }
             }
         }
     }
@@ -68,13 +75,13 @@ private class TraderDemo {
         """.trimIndent())
         parser.printHelpOn(System.out)
     }
+}
 
-    // TODO: Take this out once we have a dedicated RPC port and allow SSL on it to be optional.
-    private fun sslConfigFor(nodename: String, certsPath: String?): SSLConfiguration {
-        return object : SSLConfiguration {
-            override val keyStorePassword: String = "cordacadevpass"
-            override val trustStorePassword: String = "trustpass"
-            override val certificatesDirectory: Path = if (certsPath != null) Paths.get(certsPath) else Paths.get("build") / "nodes" / nodename / "certificates"
-        }
+// TODO: Take this out once we have a dedicated RPC port and allow SSL on it to be optional.
+fun sslConfigFor(nodename: String, certsPath: String?): SSLConfiguration {
+    return object : SSLConfiguration {
+        override val keyStorePassword: String = "cordacadevpass"
+        override val trustStorePassword: String = "trustpass"
+        override val certificatesDirectory: Path = if (certsPath != null) Paths.get(certsPath) else Paths.get("build") / "nodes" / nodename / "certificates"
     }
 }

@@ -2,16 +2,21 @@ package net.corda.traderdemo.api
 
 import net.corda.contracts.CommercialPaper
 import net.corda.core.contracts.Amount
+import net.corda.core.contracts.ContractState
 import net.corda.core.contracts.DOLLARS
+import net.corda.core.contracts.StateAndRef
 import net.corda.core.messaging.CordaRPCOps
 import net.corda.core.messaging.startFlow
+import net.corda.core.transactions.SignedTransaction
 import net.corda.core.utilities.Emoji
 import net.corda.core.utilities.loggerFor
+import net.corda.flows.BroadcastTransactionFlow
 import net.corda.traderdemo.flow.SellerFlow
 import java.util.*
 import kotlin.test.assertEquals
 
 import net.corda.traderdemo.flow.*
+
 /**
  * Created by Martin on 2017-01-25.
  */
@@ -19,6 +24,22 @@ import net.corda.traderdemo.flow.*
 class SellersClientApi(val rpc: CordaRPCOps) {
     private companion object {
         val logger = loggerFor<SellersClientApi>()
+    }
+
+    fun allLoans(): List<ContractState> {
+        logger.info("all loans")
+        val xxx: List<ContractState> = rpc.vaultAndUpdates().first
+                .map { it.state.data }
+
+//        xxx.forEach { logger.info("> $it") }
+//
+//                val x2 = xxx.filter { it is CommercialPaper }
+
+//        val x: StateAndRef<CommercialPaper.State> = xxx[0]
+//        x.state.data
+//        x.
+        return xxx //as List<CommercialPaper>
+//        return rpc.verifiedTransactions().first
     }
 
     fun issueLoan(/* tutaj powinien byc loan obj*/): Boolean {
