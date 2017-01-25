@@ -9,6 +9,7 @@ import net.corda.node.services.transactions.SimpleNotaryService
 import net.corda.testing.BOC
 import java.nio.file.Paths
 import net.corda.core.div
+import net.corda.traderdemo.flow.IssueFlow
 
 /**
  * This file is exclusively for being able to run your nodes through an IDE (as opposed to running deployNodes)
@@ -17,6 +18,7 @@ import net.corda.core.div
 fun main(args: Array<String>) {
     val permissions = setOf(
             startFlowPermission<IssuerFlow.IssuanceRequester>(),
+            startFlowPermission<IssueFlow>(),
             startFlowPermission<net.corda.traderdemo.flow.SellerFlow>())
     val demoUser = listOf(User("demo", "demo", permissions))
     driver(driverDirectory = Paths.get("build") / "trader-demo-nodes", isDebug = true) {

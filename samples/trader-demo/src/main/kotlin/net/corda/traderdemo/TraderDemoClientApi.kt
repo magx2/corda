@@ -1,21 +1,34 @@
 package net.corda.traderdemo
 
+import com.esotericsoftware.kryo.Kryo
 import com.google.common.net.HostAndPort
+import net.corda.contracts.CommercialPaper
 import net.corda.contracts.testing.calculateRandomlySizedAmounts
-import net.corda.core.contracts.Amount
-import net.corda.core.contracts.DOLLARS
+import net.corda.core.contracts.*
+import net.corda.core.crypto.CompositeKey
+import net.corda.core.crypto.Party
+import net.corda.core.crypto.composite
+import net.corda.core.crypto.generateKeyPair
+import net.corda.core.days
+import net.corda.core.flows.FlowLogic
 import net.corda.core.messaging.CordaRPCOps
 import net.corda.core.messaging.startFlow
+import net.corda.core.node.NodeInfo
+import net.corda.core.seconds
 import net.corda.core.serialization.OpaqueBytes
 import net.corda.core.transactions.SignedTransaction
 import net.corda.core.utilities.Emoji
 import net.corda.core.utilities.loggerFor
 import net.corda.flows.IssuerFlow.IssuanceRequester
+import net.corda.flows.NotaryFlow
 import net.corda.node.services.messaging.CordaRPCClient
 import net.corda.testing.BOC
 import net.corda.testing.http.HttpApi
+import net.corda.traderdemo.flow.IssueFlow
 import net.corda.traderdemo.flow.SellerFlow
+import java.time.Instant
 import java.util.*
+import net.corda.traderdemo.flow.*
 import kotlin.test.assertEquals
 
 /**
@@ -26,7 +39,7 @@ class TraderDemoClientApi(val rpc: CordaRPCOps) {
         val logger = loggerFor<TraderDemoClientApi>()
     }
 
-    fun runBuyer(amount: Amount<Currency> = 30000.0.DOLLARS, notary: String = "Notary"): Boolean {
+    fun runBuyer2(amount: Amount<Currency> = 30000.0.DOLLARS, notary: String = "Notary"): Boolean {
         val bankOfCordaParty = rpc.partyFromName(BOC.name)
                 ?: throw Exception("Unable to locate ${BOC.name} in Network Map Service")
         val me = rpc.nodeIdentity()
@@ -44,6 +57,12 @@ class TraderDemoClientApi(val rpc: CordaRPCOps) {
     }
 
     fun runSeller(amount: Amount<Currency> = 1000.0.DOLLARS, counterparty: String): Boolean {
+        val commercialPaperTx = rpc.startFlow(::IssueFlow).returnValue.toBlocking().first()
+        val commercialPaper = commercialPaperTx.tx.outRef<CommercialPaper.State>(0)
+        return false
+    }
+
+    fun runSeller2(amount: Amount<Currency> = 1000.0.DOLLARS, counterparty: String): Boolean {
         val otherParty = rpc.partyFromName(counterparty)
         if (otherParty != null) {
             // The seller will sell some commercial paper to the buyer, who will pay with (self issued) cash.
